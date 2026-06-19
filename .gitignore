@@ -1,0 +1,23 @@
+# Virtual environment
+venv/
+
+# dbt
+target/
+dbt_packages/
+logs/
+
+# DuckDB database files
+*.duckdb
+*.duckdb.wal
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Seeds (large CSV files - don't commit to GitHub)
+olist_pipeline/seeds/*.csv
