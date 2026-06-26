@@ -69,8 +69,9 @@ olist_pipeline:
 6. Load raw data and run models
 ```bash
 cd olist_pipeline
-dbt seed
-dbt run
+dbt debug    # verify connection is working
+dbt seed     # load CSV files into DuckDB (only needed on first setup or when CSVs change)
+dbt run      # build all models
 ```
 
 ## Status
