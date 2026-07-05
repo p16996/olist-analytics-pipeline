@@ -35,8 +35,8 @@ final as (
         o.shipped_at,
         o.delivered_at,
         o.estimated_delivery_at,
-        p.total_payment_amount,
-        p.payment_count,
+        coalesce(p.total_payment_amount, 0)  as total_payment_amount,
+        coalesce(p.payment_count, 0)         as payment_count,
         datediff('day', o.ordered_at, o.delivered_at) as delivery_days
 
     from orders o

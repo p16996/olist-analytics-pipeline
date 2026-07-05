@@ -1,0 +1,47 @@
+version: 2
+
+models:
+  - name: mart_orders
+    description: "Final order-level table with delivery performance metrics. One row per order."
+    columns:
+      - name: order_id
+        description: "Unique identifier for each order"
+        tests:
+          - unique
+          - not_null
+      - name: delivery_status
+        description: "Delivery performance: On Time, Delayed, or Not Delivered"
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ['On Time', 'Delayed', 'Not Delivered']
+      - name: total_payment_amount
+        description: "Total amount paid for the order in BRL"
+
+  - name: mart_revenue
+    description: "Monthly revenue aggregated by product category. One row per month per category."
+    columns:
+      - name: revenue_month
+        description: "First day of the month for this revenue period"
+        tests:
+          - not_null
+      - name: total_revenue
+        description: "Total revenue including item price and freight in BRL"
+        tests:
+          - not_null
+
+  - name: mart_seller_performance
+    description: "Seller performance metrics aggregated across all orders. One row per seller."
+    columns:
+      - name: seller_id
+        description: "Unique identifier for each seller"
+        tests:
+          - unique
+          - not_null
+      - name: total_orders
+        description: "Total number of distinct orders fulfilled by this seller"
+        tests:
+          - not_null
+      - name: avg_review_score
+        description: "Average customer review score for this seller between 1 and 5"

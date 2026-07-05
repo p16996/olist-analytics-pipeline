@@ -1,0 +1,35 @@
+version: 2
+
+models:
+  - name: int_orders_enriched
+    description: "Orders joined with customer details and aggregated payment data. One row per order."
+    columns:
+      - name: order_id
+        description: "Unique identifier for each order"
+        tests:
+          - unique
+          - not_null
+      - name: customer_id
+        description: "Foreign key to stg_customers"
+        tests:
+          - not_null
+      - name: total_payment_amount
+        description: "Total amount paid across all payment methods for this order"
+        tests:
+          - not_null
+
+  - name: int_order_items_enriched
+    description: "Order items joined with product, seller and category details. One row per item per order."
+    columns:
+      - name: order_id
+        description: "Foreign key to stg_orders"
+        tests:
+          - not_null
+      - name: seller_id
+        description: "Foreign key to stg_sellers"
+        tests:
+          - not_null
+      - name: item_price
+        description: "Price of the item in BRL excluding freight"
+        tests:
+          - not_null
