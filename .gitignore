@@ -4,6 +4,7 @@ venv/
 # dbt
 target/
 dbt_packages/
+.vscode/
 logs/
 
 # DuckDB database files
