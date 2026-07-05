@@ -4,7 +4,6 @@ venv/
 # dbt
 target/
 dbt_packages/
-.vscode/
 logs/
 
 # DuckDB database files
@@ -20,5 +19,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Seeds (large CSV files - don't commit to GitHub)
+# Seeds (large CSV files)
 olist_pipeline/seeds/*.csv
+
+# VS Code
+.vscode/
