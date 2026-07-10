@@ -28,6 +28,7 @@ olist_pipeline/
 
 **Requirements**
 - Python 3.11.9
+- Node.js 20+ (for Evidence.dev dashboard)
 - Git
 
 **Steps**
@@ -44,7 +45,7 @@ py -3.11 -m venv venv
 venv\Scripts\activate
 ```
 
-3. Install dependencies
+3. Install Python dependencies
 ```bash
 pip install -r requirements.txt
 ```
@@ -72,7 +73,35 @@ cd olist_pipeline
 dbt debug    # verify connection is working
 dbt seed     # load CSV files into DuckDB (only needed on first setup or when CSVs change)
 dbt run      # build all models
+dbt test     # run data quality tests
 ```
+
+7. Run Dagster orchestration
+```bash
+cd ..
+dagster dev -f dagster_pipeline.py
+```
+Open http://127.0.0.1:3000 to view the Dagster UI
+
+8. Run Evidence.dev dashboard
+```bash
+cd evidence_dashboard
+npm install
+npm run sources
+npm run dev
+```
+Open http://localhost:3000 to view the dashboard
+
+## Common Commands
+
+| Command | What it does | When to use |
+|---|---|---|
+| `dbt debug` | Checks connection and config | First setup, diagnosing issues |
+| `dbt seed` | Loads CSV files into DuckDB | First setup or when CSVs change |
+| `dbt run` | Builds all models | Every time you change a model |
+| `dbt run --select model_name` | Builds one specific model | When working on a single model |
+| `dbt test` | Runs data quality tests | After building models |
+| `dbt docs generate && dbt docs serve` | Opens documentation site | To view model docs and lineage |
 
 ## Status
 🚧 In progress
