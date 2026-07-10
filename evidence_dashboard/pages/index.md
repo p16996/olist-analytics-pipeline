@@ -1,8 +1,6 @@
 ---
-title: Olist E-Commerce Analytics
+title: Olist E-Commerce Analytics Dashboard
 ---
-
-# Olist E-Commerce Analytics Dashboard
 
 An end-to-end analytics pipeline built with dbt, DuckDB, and Dagster.
 
