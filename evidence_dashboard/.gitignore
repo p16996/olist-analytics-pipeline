@@ -8,3 +8,7 @@ static/data
 .vscode/settings.json
 .env
 .evidence/meta
+sources/olist/dev.duckdb
+sources/needful_things/
+.evidence/template/
+node_modules/
