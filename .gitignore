@@ -5,22 +5,31 @@ venv/
 target/
 dbt_packages/
 logs/
+olist_pipeline/logs/
 
-# DuckDB database files
+# DuckDB
 *.duckdb
 *.duckdb.wal
 
 # Python
 __pycache__/
 *.pyc
-*.pyo
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Seeds (large CSV files)
+# Seeds
 olist_pipeline/seeds/*.csv
 
 # VS Code
 .vscode/
+
+# Evidence
+evidence_dashboard/node_modules/
+evidence_dashboard/.evidence/
+evidence_dashboard/build/
+evidence_dashboard/sources/needful_things/
+evidence_dashboard/sources/olist/dev.duckdb
+evidence_dashboard/dev.duckdb
+evidence_dashboard/.env
