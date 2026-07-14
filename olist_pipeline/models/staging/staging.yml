@@ -1,160 +1,200 @@
 version: 2
-
 models:
-  - name: stg_orders
-    description: "Cleaned orders data from raw Olist dataset. One row per order. Date columns cast from text to timestamp. Source column names preserved."
-    columns:
-      - name: order_id
-        description: "Unique identifier for each order. Primary key."
-        tests:
-          - unique
-          - not_null
-      - name: customer_id
-        description: "Foreign key to stg_customers. Note: this is per-order, not per-person. Same customer can have multiple order_ids."
-        tests:
-          - not_null
-      - name: order_status
-        description: "Current status of the order. Valid values: delivered, shipped, canceled, unavailable, invoiced, processing, created, approved."
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['delivered', 'shipped', 'canceled', 'unavailable',
-                         'invoiced', 'processing', 'created', 'approved']
-      - name: ordered_at
-        description: "Timestamp when the customer placed the order. Renamed from order_purchase_timestamp."
-      - name: approved_at
-        description: "Timestamp when the order was approved for fulfillment. Null for cancelled orders."
-      - name: shipped_at
-        description: "Timestamp when the order was handed to the carrier. Null for unshipped orders."
-      - name: delivered_at
-        description: "Timestamp when the order was delivered to the customer. Null for undelivered orders."
-      - name: estimated_delivery_at
-        description: "Estimated delivery date shown to the customer at time of purchase."
-
-  - name: stg_customers
-    description: "Cleaned customers data. Note: customer_id is generated per order, not per person. Use customer_unique_id to identify distinct individuals across multiple orders."
-    columns:
-      - name: customer_id
-        description: "Per-order customer identifier. Not a true unique customer ID — same person gets a new customer_id for each order."
-        tests:
-          - unique
-          - not_null
-      - name: customer_unique_id
-        description: "True unique identifier per customer across all orders. Use this for customer-level analysis."
-        tests:
-          - not_null
-      - name: zip_code
-        description: "Customer zip code prefix. Renamed from customer_zip_code_prefix."
-      - name: city
-        description: "Customer city. Renamed from customer_city."
-      - name: state
-        description: "Customer state code. Renamed from customer_state."
-
-  - name: stg_order_items
-    description: "Cleaned order items data. One row per item per order. Item price and freight price kept separate to preserve analytical flexibility — totals are calculated in downstream models."
-    columns:
-      - name: order_id
-        description: "Foreign key to stg_orders."
-        tests:
-          - not_null
-      - name: order_item_id
-        description: "Sequential item number within an order. Starts at 1."
-      - name: product_id
-        description: "Foreign key to stg_products."
-        tests:
-          - not_null
-      - name: seller_id
-        description: "Foreign key to stg_sellers."
-        tests:
-          - not_null
-      - name: item_price
-        description: "Price of the item in BRL excluding shipping. Renamed from price."
-        tests:
-          - not_null
-      - name: freight_price
-        description: "Shipping cost for this item in BRL. Renamed from freight_value. Kept separate from item_price to allow independent freight analysis."
-
-  - name: stg_order_payments
-    description: "Cleaned payments data. One row per payment method per order. A single order can have multiple rows if the customer used multiple payment methods. Use payment_sequential to identify order of payments."
-    columns:
-      - name: order_id
-        description: "Foreign key to stg_orders."
-        tests:
-          - not_null
-      - name: payment_sequential
-        description: "Sequence number for payments on the same order. Starts at 1. Orders with multiple payment methods have multiple rows."
-      - name: payment_type
-        description: "Payment method used. Valid values: credit_card, boleto, voucher, debit_card, not_defined."
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: ['credit_card', 'boleto', 'voucher', 'debit_card', 'not_defined']
-      - name: payment_installments
-        description: "Number of installments chosen by the customer."
-      - name: payment_amount
-        description: "Amount paid via this payment method in BRL. Renamed from payment_value."
-        tests:
-          - not_null
-
-  - name: stg_order_reviews
-    description: "Cleaned reviews data. One row per review. Reviews are submitted by customers after delivery."
-    columns:
-      - name: review_id
-        description: "Unique identifier for each review."
-        tests:
-          - not_null
-      - name: order_id
-        description: "Foreign key to stg_orders."
-        tests:
-          - not_null
-      - name: review_score
-        description: "Customer satisfaction score between 1 (worst) and 5 (best)."
-        tests:
-          - not_null
-          - accepted_values:
-              arguments:
-                values: [1, 2, 3, 4, 5]
-      - name: comment_title
-        description: "Optional review title written by the customer. Renamed from review_comment_title."
-      - name: comment_message
-        description: "Optional review body written by the customer. Renamed from review_comment_message."
-      - name: review_created_at
-        description: "Timestamp when the review was created. Renamed from review_creation_date."
-      - name: review_answered_at
-        description: "Timestamp when the seller responded to the review. Renamed from review_answer_timestamp."
-
-  - name: stg_products
-    description: "Cleaned products data. Note: upstream source has typos in column names (lenght instead of length) — corrected in this model so downstream models use correct spelling."
-    columns:
-      - name: product_id
-        description: "Unique identifier for each product. Primary key."
-        tests:
-          - unique
-          - not_null
-      - name: category_name
-        description: "Product category in Portuguese. Join to stg_product_categories for English translation."
-      - name: product_name_length
-        description: "Character count of product name. Renamed from product_name_lenght (upstream typo corrected)."
-      - name: product_description_length
-        description: "Character count of product description. Renamed from product_description_lenght (upstream typo corrected)."
-      - name: photos_count
-        description: "Number of product photos. Renamed from product_photos_qty."
-      - name: weight_grams
-        description: "Product weight in grams. Renamed from product_weight_g."
-
-  - name: stg_sellers
-    description: "Cleaned sellers data. Sellers and customers have similar structure but represent different business entities — seller location indicates where items ship FROM, customer location indicates where they ship TO."
-    columns:
-      - name: seller_id
-        description: "Unique identifier for each seller. Primary key."
-        tests:
-          - unique
-          - not_null
-      - name: zip_code
-        description: "Seller zip code prefix. Renamed from seller_zip_code_prefix."
-      - name: city
-        description: "Seller city. Renamed from seller_city."
-      - name: state
-        description: "Seller state code. Renamed from seller_state."
+- name: stg_orders
+  description: Staged orders data from Olist, cleaning and renaming raw order fields.
+  columns:
+  - name: order_id
+    description: Unique identifier for each customer order placed on the platform.
+    tests:
+    - unique
+    - not_null
+  - name: customer_id
+    description: Unique identifier linking the order to a specific customer.
+    tests:
+    - not_null
+  - name: order_status
+    description: Current fulfillment status of the order, e.g. delivered, cancelled.
+    tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - delivered
+          - shipped
+          - canceled
+          - unavailable
+          - invoiced
+          - processing
+          - created
+          - approved
+  - name: ordered_at
+    description: Timestamp when the customer originally placed and submitted the order.
+  - name: approved_at
+    description: Timestamp when the order payment was confirmed and approved.
+  - name: shipped_at
+    description: Timestamp when the carrier picked up the order for delivery.
+  - name: delivered_at
+    description: Timestamp when the order was successfully delivered to the customer.
+  - name: estimated_delivery_at
+    description: Estimated timestamp for when the order was expected to arrive.
+- name: stg_customers
+  description: Staged customer data from Olist, renaming and standardizing raw customer
+    source fields.
+  columns:
+  - name: customer_id
+    description: Unique identifier for each customer order account in Olist.
+    tests:
+    - unique
+    - not_null
+  - name: customer_unique_id
+    description: Persistent identifier linking a customer across multiple orders.
+    tests:
+    - not_null
+  - name: zip_code
+    description: Five-digit ZIP code prefix of the customer's delivery address.
+  - name: city
+    description: City name associated with the customer's registered address.
+  - name: state
+    description: Two-letter Brazilian state abbreviation of the customer's address.
+- name: stg_order_items
+  description: Staged order items data from Olist, one row per item per order.
+  columns:
+  - name: order_id
+    description: Unique identifier of the order this item belongs to.
+    tests:
+    - not_null
+  - name: order_item_id
+    description: Sequential number identifying each item's position within an order.
+  - name: product_id
+    description: Unique identifier of the product purchased in this order item.
+    tests:
+    - not_null
+  - name: seller_id
+    description: Unique identifier of the seller fulfilling this order item.
+    tests:
+    - not_null
+  - name: item_price
+    description: Purchase price of the individual item in Brazilian reais.
+    tests:
+    - not_null
+  - name: freight_price
+    description: Shipping cost charged for delivering this individual item.
+- name: stg_order_payments
+  description: Staged order payment transactions including payment method, installments,
+    and amount details.
+  columns:
+  - name: order_id
+    description: Unique identifier linking the payment to its corresponding order.
+    tests:
+    - not_null
+  - name: payment_sequential
+    description: Sequential number indicating the order of payments for a single order.
+  - name: payment_type
+    description: Method of payment used, such as credit card or voucher.
+    tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - credit_card
+          - boleto
+          - voucher
+          - debit_card
+          - not_defined
+  - name: payment_installments
+    description: Number of installments chosen by the customer for the payment.
+  - name: payment_amount
+    description: Total monetary value of the payment transaction in local currency.
+    tests:
+    - not_null
+- name: stg_order_reviews
+  description: Staged order reviews data from Olist, cleaned and renamed for downstream
+    use.
+  columns:
+  - name: review_id
+    description: Unique identifier for each customer review submission.
+    tests:
+    - not_null
+  - name: order_id
+    description: Foreign key linking the review to its associated order.
+    tests:
+    - not_null
+  - name: review_score
+    description: Numeric satisfaction rating given by the customer, ranging from 1
+      to 5.
+    tests:
+    - not_null
+    - accepted_values:
+        arguments:
+          values:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+  - name: comment_title
+    description: Optional short title provided by the customer for their review.
+  - name: comment_message
+    description: Optional free-text feedback message written by the customer.
+  - name: review_created_at
+    description: Timestamp indicating when the review was originally created.
+  - name: review_answered_at
+    description: Timestamp indicating when the seller or platform responded to the
+      review.
+- name: stg_products
+  description: Staged product catalog data cleaned and renamed from the Olist products
+    source dataset.
+  columns:
+  - name: product_id
+    description: Unique identifier for each product in the Olist catalog.
+    tests:
+    - unique
+    - not_null
+  - name: category_name
+    description: Portuguese product category name the product belongs to.
+  - name: product_name_length
+    description: Character length of the product name string.
+  - name: product_description_length
+    description: Character length of the product description string.
+  - name: photos_count
+    description: Number of photos published for the product listing.
+  - name: weight_grams
+    description: Product weight measured in grams.
+- name: stg_sellers
+  description: Staged seller data from Olist, containing location details for each
+    marketplace seller.
+  columns:
+  - name: seller_id
+    description: Unique identifier for each seller operating on the Olist marketplace.
+    tests:
+    - unique
+    - not_null
+  - name: zip_code
+    description: Five-digit zip code prefix for the seller's registered location.
+  - name: city
+    description: Name of the city where the seller is registered.
+  - name: state
+    description: Two-letter Brazilian state abbreviation for the seller's registered
+      location.
+- name: stg_geolocation
+  description: Staging model for Brazilian geolocation data mapped by zip code prefix.
+  columns:
+  - name: zip_code
+    description: Five-digit Brazilian zip code prefix identifying a geographic area.
+  - name: latitude
+    description: Geographic latitude coordinate of the zip code location.
+  - name: longitude
+    description: Geographic longitude coordinate of the zip code location.
+  - name: city
+    description: Name of the city associated with the zip code prefix.
+  - name: state
+    description: Two-letter Brazilian state abbreviation for the zip code.
+- name: stg_product_categories
+  description: Staging model mapping raw Portuguese product category names to their
+    English translations.
+  columns:
+  - name: category_name
+    description: Original product category name in Portuguese, sourced from raw data.
+  - name: category_name_english
+    description: Translated English equivalent of the Portuguese product category
+      name.

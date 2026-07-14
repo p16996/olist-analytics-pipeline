@@ -1,57 +1,58 @@
 version: 2
-
 models:
-  - name: int_orders_enriched
-    description: "Orders joined with customer details and aggregated payment data. One row per order. Payment rows are aggregated before joining to prevent row multiplication — a single order can have multiple payment methods. Null payment amounts defaulted to 0 using coalesce to handle one source data edge case where a delivered order had no payment record."
-    columns:
-      - name: order_id
-        description: "Unique identifier for each order. Primary key."
-        tests:
-          - unique
-          - not_null
-      - name: customer_id
-        description: "Foreign key to stg_customers. Per-order identifier."
-        tests:
-          - not_null
-      - name: customer_unique_id
-        description: "True unique customer identifier across all orders. Use this for customer-level analysis."
-      - name: customer_city
-        description: "City where the customer is located. Renamed from city for clarity in joined context."
-      - name: customer_state
-        description: "State where the customer is located. Renamed from state for clarity in joined context."
-      - name: total_payment_amount
-        description: "Total amount paid across all payment methods for this order. Summed from stg_order_payments. Defaults to 0 if no payment record exists."
-        tests:
-          - not_null
-      - name: payment_count
-        description: "Number of payment methods used for this order. Defaults to 0 if no payment record exists."
-      - name: delivery_days
-        description: "Number of days between order placement and delivery. Calculated as datediff between ordered_at and delivered_at. Null for undelivered orders."
-
-  - name: int_order_items_enriched
-    description: "Order items joined with product, seller, and category details. One row per item per order. Total item price calculated here as item_price + freight_price. Category names translated to English via join to stg_product_categories."
-    columns:
-      - name: order_id
-        description: "Foreign key to stg_orders."
-        tests:
-          - not_null
-      - name: order_item_id
-        description: "Sequential item number within an order."
-      - name: seller_id
-        description: "Foreign key to stg_sellers."
-        tests:
-          - not_null
-      - name: item_price
-        description: "Price of the item in BRL excluding freight."
-        tests:
-          - not_null
-      - name: freight_price
-        description: "Shipping cost for this item in BRL."
-      - name: total_item_price
-        description: "Combined item and freight price. Calculated as item_price + freight_price. First aggregation point — kept separate in staging to preserve analytical flexibility."
-      - name: category_name_english
-        description: "English translation of product category. Joined from stg_product_categories. Null if no translation exists."
-      - name: seller_city
-        description: "City where the seller is located. Renamed from city for clarity in joined context."
-      - name: seller_state
-        description: "State where the seller is located. Renamed from state for clarity in joined context."
+- name: int_orders_enriched
+  description: Enriched orders model joining customer details and aggregated payment
+    data per order.
+  columns:
+  - name: order_id
+    description: Unique identifier for each order in the platform.
+    tests:
+    - unique
+    - not_null
+  - name: customer_id
+    description: Foreign key linking the order to a specific customer record.
+    tests:
+    - not_null
+  - name: customer_unique_id
+    description: Deduplicated identifier representing a unique customer across multiple
+      accounts.
+  - name: customer_city
+    description: City where the customer associated with the order is located.
+  - name: customer_state
+    description: State where the customer associated with the order is located.
+  - name: total_payment_amount
+    description: Sum of all payment amounts associated with the order.
+    tests:
+    - not_null
+  - name: payment_count
+    description: Total number of payment transactions made for the order.
+  - name: delivery_days
+    description: Number of days elapsed between order placement and delivery.
+- name: int_order_items_enriched
+  description: Enriched order items combining product, seller, and category details
+    for downstream analysis.
+  columns:
+  - name: order_id
+    description: Unique identifier for the order associated with this line item.
+    tests:
+    - not_null
+  - name: order_item_id
+    description: Sequential number identifying each item's position within an order.
+  - name: seller_id
+    description: Unique identifier for the seller fulfilling this order item.
+    tests:
+    - not_null
+  - name: item_price
+    description: Purchase price of the product excluding freight costs.
+    tests:
+    - not_null
+  - name: freight_price
+    description: Shipping cost charged for delivering this specific order item.
+  - name: total_item_price
+    description: Sum of item price and freight price for this order item.
+  - name: category_name_english
+    description: English translation of the product category name.
+  - name: seller_city
+    description: City where the seller fulfilling this order item is located.
+  - name: seller_state
+    description: Brazilian state where the seller fulfilling this order item is located.
